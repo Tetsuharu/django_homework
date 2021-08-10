@@ -1,0 +1,11 @@
+[Unit]
+Description=uWSGI instance to serve qytang
+After=network.target
+
+[Service]
+User=nginx
+Group=nginx
+ExecStart=/usr/bin/bash -c 'cd /djghomework/; uwsgi --ini uwsgi.ini'
+
+[Install]
+WantedBy=multi-user.target

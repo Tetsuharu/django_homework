@@ -1,0 +1,99 @@
+1. pip3 install uwsgi
+
+2. uwsgi --http :8080 --chdir /djghomework --module djghomework.wsgi
+
+3. [root@localhost djghomework]# pwd
+/djghomework
+[root@localhost djghomework]# vim uwsgi.ini
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+#uwsgi.ini file
+[uwsgi]
+
+# Django-related settings
+socket = 127.0.0.1:8001
+
+# the base directory (full path)
+chdir = /djghomework
+
+# Django's wsgi file
+module = djghomework.wsgi
+
+# process-related settings
+# master
+master          = true
+
+# maximum number of worker processes
+processes      = 100
+
+# ... with appropriate permissions - may be needed
+#chmod-socket    = 666
+#chown-socket = nginx:nginx
+# clear environment on exit
+vacuum          = true
+enable-threads = true
+++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+4. yum install epel-release
+   yum -y install nginx
+
+5.
+	#我们插入的内容 开始
+	    upstream django {
+	        server 127.0.0.1:8001;
+	    }
+	    server {
+	        listen      80 default_server;
+	        listen      [::]:80 default_server;
+	        server_name  10.1.1.21;
+	        root        /djghomework;    #项目路径
+
+	        # Load configuration files for the default server block.
+
+	        include /etc/nginx/default.d/*.conf;
+
+	        location / {
+	                include uwsgi_params;
+	                uwsgi_pass django;
+	        }
+	        location /static/ {    #加入静态文件路径，包括css文件，image文件和js文件
+	                autoindex on;
+	                alias /djghomework/static/;
+	        }
+	}
+	#我们插入的内容 结束
+
+6.
+[root@localhost system]# pwd
+/etc/systemd/system
+[root@localhost system]# vim qytang.service
+
+[Unit]
+Description=uWSGI instance to serve qytang
+After=network.target
+
+[Service]
+User=nginx
+Group=nginx
+ExecStart=/usr/bin/bash -c 'cd /djghomework/; uwsgi --ini uwsgi.ini'
+
+[Install]
+WantedBy=multi-user.target
+
+7.
+systemctl start qytang.service 
+systemctl start nginx 
+
+
+systemctl enable qytang.service 
+systemctl enable nginx 
+
+8.
+ALLOWED_HOSTS = ['10.1.1.21', 'djg.mingjiao.org']
+
+9.修改host文件
+
+10.重启服务
+
+
+
